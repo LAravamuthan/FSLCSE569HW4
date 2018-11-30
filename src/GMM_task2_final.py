@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Nov 21
 @author: Aravamuthan Lakshminarayanan
@@ -7,7 +6,7 @@ Created on Mon Nov 21
 import numpy as np
 from matplotlib.patches import Ellipse
 import pylab as plt
-
+from src import kmeans as K
 
 class GMM:
 
@@ -22,13 +21,15 @@ class GMM:
 
         # n = number of data-points, d = dimension of data points
         n, d = X.shape
-
+        x = K.Kmeans()
+        x.run_kmeans(3, 1)
         # randomly choose the starting centroids/means
         ## as 3 of the points from datasets
         mu = X[np.random.choice(n, self.k, False), :]
-
+        mu = x.to_pass_centers
         # initialize the covariance matrices for each gaussians
         Sigma = [np.eye(d)] * self.k
+        Sigma = x.covariance
 
         # initialize the probabilities/weights for each gaussians
         w = [1. / self.k] * self.k
@@ -112,70 +113,6 @@ class GMM:
 
 
 
-def demo_2d():
-    # Load data
-    # X = np.genfromtxt('data1.csv', delimiter=',')
-    ### generate the random data
-    np.random.seed(3)
-    m1, cov1 = [9, 8], [[.5, 1], [.25, 1]]  ## first gaussian
-    data1 = np.random.multivariate_normal(m1, cov1, 90)
-
-    m2, cov2 = [6, 13], [[.5, -.5], [-.5, .1]]  ## second gaussian
-    data2 = np.random.multivariate_normal(m2, cov2, 45)
-
-    m3, cov3 = [4, 7], [[0.25, 0.5], [-0.1, 0.5]]  ## third gaussian
-    data3 = np.random.multivariate_normal(m3, cov3, 65)
-    X = np.vstack((data1, np.vstack((data2, data3))))
-    np.random.shuffle(X)
-    #    np.savetxt('sample.csv', X, fmt = "%.4f",  delimiter = ",")
-    ####
-    gmm = GMM(3, 0.000001)
-    params = gmm.fit_EM(X, max_iters=100)
-    print
-    params.log_likelihoods
-    import pylab as plt
-    from matplotlib.patches import Ellipse
-
-    def plot_ellipse(pos, cov, nstd=2, ax=None, **kwargs):
-        def eigsorted(cov):
-            vals, vecs = np.linalg.eigh(cov)
-            order = vals.argsort()[::-1]
-            return vals[order], vecs[:, order]
-
-        if ax is None:
-            ax = plt.gca()
-
-        vals, vecs = eigsorted(cov)
-        theta = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
-
-        # Width and height are "full" widths, not radius
-        width, height = 2 * nstd * np.sqrt(abs(vals))
-        ellip = Ellipse(xy=pos, width=width, height=height, angle=theta, **kwargs)
-
-        ax.add_artist(ellip)
-        return ellip
-
-    def show(X, mu, cov):
-
-        plt.cla()
-        K = len(mu)  # number of clusters
-        colors = ['b', 'k', 'g', 'c', 'm', 'y', 'r']
-        plt.plot(X.T[0], X.T[1], 'm*')
-        for k in range(K):
-            plot_ellipse(mu[k], cov[k], alpha=0.6, color=colors[k % len(colors)])
-
-    fig = plt.figure(figsize=(13, 6))
-    fig.add_subplot(121)
-    show(X, params.mu, params.Sigma)
-    fig.add_subplot(122)
-    plt.plot(np.array(params.log_likelihoods))
-    plt.title('Log Likelihood vs iteration plot')
-    plt.xlabel('Iterations')
-    plt.ylabel('log likelihood')
-    plt.show()
-    print
-    gmm.predict(np.array([1, 2]))
-
 
 if __name__ == "__main__":
 
@@ -193,7 +130,7 @@ if __name__ == "__main__":
 
     if not options.clusters:
         print("Used default number of clusters = 3")
-        k = 3
+        k = 2
     else:
         k = int(options.clusters)
 
@@ -209,7 +146,7 @@ if __name__ == "__main__":
     else:
         eps = int(options.maxiters)
 
-    X = np.genfromtxt("DS_3.txt", delimiter=',')
+    X = np.genfromtxt("DS_2.txt", delimiter=',')
     gmm = GMM(k, eps)
     params = gmm.fit_EM(X, max_iters)
     print(params.log_likelihoods)
